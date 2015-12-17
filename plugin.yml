@@ -1,0 +1,19 @@
+name: Virgil
+version: 1.0
+author: trainphreak
+softdepend: [Vault]
+main: com.grid_tronix.the.virgil
+commands:
+  virgil:
+    description: Base command for Virgil
+permissions:
+  virgil.trigger:
+    description: Players with this permission are able to trigger a config-defined response
+    default: true
+  virgil.trigger.bot:
+    description: Players with this permission are able to trigger a chatbot response
+    default: false
+    children:
+      virgil.trigger: true
+  virgil.reload:
+    default: false

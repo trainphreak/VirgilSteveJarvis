@@ -1,0 +1,5 @@
+chat-prefix: &c[Virgil]
+keywords:
+  Jarvis,website:
+    response: Our website is thegrid-tronix.enjin.com
+    global: true
