@@ -1,5 +1,78 @@
-chat-prefix: &c[Virgil]
+# For color reference, use http://www.minecraftwiki.net/wiki/Formatting_codes but with the prefix '&'
+#
+# Use %player% for commands only! Virgil can only do simple commands! %player% will be the player targeted by a command
+# PROTIP: Player names may contain color codes, expecially on servers with /nick. Make sure to set the color back after
+#  using %name% in a response or they'll end up looking really weird
+# Use %name% for the display name of the player who triggered Virgil to write the response
+# NOTE: The %console% wildcard from Jarvis has been removed because it's a big security risk with very little benefit
+#
+# The permission line should have the exact permission given to players, but it can be any permission you want to set.
+#  It can be used to prevent players from executing a response command they don't have permission to use, or to only
+#  allow certain players to trigger a global response. You can put a permission-less, non-global version of a response
+#  after the global version, as seen with the "Virgil,kick" keywords below. Players who lack the permission for the first
+#  response will still see the second response.
+#
+# Example:
+# keywords:
+#     Virgil,help,stuck:
+#       response:
+#         - If you are stuck, %name%, use &l/spawn
+#       global: false
+#     Virgil,cookie:
+#       response:
+#         - I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
+#       global: true
+#       permission: virgil.cookie
+#     Virgil,kick:
+#       response:
+#         - Certainly, %name%&f.
+#         - /kick %player%
+#       global: true
+#       permission: bukkit.command.kick
+#     Virgil,kick:
+#       response:
+#         - I'm sorry, %name%&f, I'm afraid I can't do that.
+#       global: false
+#
+# Virgil will pick keyword matches that are longer first. For example if the player says "Virgil what is your website?"
+#  and the config has the keywords "Virgil,what" and "Virgil,website", then the second one will be the one picked.
+#  However, if they are identical length, for example a player says "Virgil does the website use cookies?" with the
+#  keywords in the config "Virgil,website" and "Virgil,cookies", the plugin will use the one listed first. Also, the
+#  order of the keywords doesn't matter. As long as all the keywords are in the chat message, Virgil will answer.
+#  (Disclaimer: I have no idea why someone would ask Virgil if the website used cookies.)
+#
+# If a chat message from a player with the virgil.trigger.bot permission begins with the bot-keyword, and the message
+#  doesn't match any of the configured keywords, the message (with the keyword removed from the beginning) will be sent
+#  to Cleverbot for a response. Messages to and from Cleverbot are always global.
+
+chat-prefix: &1[&Virgil&1]&f
+bot-keyword: virgil
 keywords:
-  Jarvis,website:
-    response: Our website is thegrid-tronix.enjin.com
+  Virgil,website:
+    response:
+      - Our website is thegrid-tronix.enjin.com
+    global: true
+  Virgil,cookie:
+    response:
+      - I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
+    global: true
+  Virgil?:
+    response:
+      - Yes, %name%&f?
+    global: false
+  Virgil,hi:
+    response:
+      - Hello %name%
+    global: false
+  Virgil,hello:
+    response:
+      - Hello %name%
+  Virgil,who,you:
+    response:
+      - I am an assistant cobbled together by &ctrainphreak&f and &cimarki360&f, using parts from Jarvis (by &cScutt&f) and Steve (by &cnxtguy&f).
+    global: false
+  Virgil,ban:
+    response:
+      - Certainly, sir.
+      - /ban %player%
     global: true
