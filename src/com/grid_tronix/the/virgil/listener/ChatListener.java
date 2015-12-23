@@ -26,7 +26,7 @@ public class ChatListener implements Listener
     private ChatterBot cleverbot;
     private ChatterBotSession cleverbotSession;
 
-    private boolean debug = true;
+    private boolean debug = false;
     private static int messageID = 0;
 
     public ChatListener(final VirgilMain plugin, ChatterBotFactory chatterBotFactory, ChatterBot cleverbot, ChatterBotSession cleverbotSession)
