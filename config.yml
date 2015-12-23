@@ -1,4 +1,4 @@
-# For color reference, use http://www.minecraftwiki.net/wiki/Formatting_codes but with the prefix '^'
+# For color reference, use http://www.minecraftwiki.net/wiki/Formatting_codes but with the prefix '&'
 #
 # Use %player% for commands only! Virgil can only do simple commands! %player% will be the player targeted by a command
 # PROTIP: Player names may contain color codes, expecially on servers with /nick. Make sure to set the color back after
@@ -6,31 +6,32 @@
 # Use %name% for the display name of the player who triggered Virgil to write the response
 # NOTE: The %console% wildcard from Jarvis has been removed because it's a big security risk with very little benefit
 #
-# The permission line should have the exact permission given to players, but it can be any permission you want to set.
+# The permission section should have the exact permission given to players, but it can be any permission you want to set.
 #  It can be used to prevent players from trying to execute a response command they don't have permission to use, or to
 #  only allow certain players to trigger a global response. If there is a permission specified, you also need a global
-#  setting and a response under the permission; these are used when the player doesn't have the specified permission.
+#  setting and a response with the permission; these are used when the player doesn't have the specified permission.
 #  It is *POSSIBLE BUT NOT RECOMMENDED* to have commands in the "no permissions" response list.
 #
 # Example:
 # keywords:
 #     Virgil,help,stuck:
 #       response:
-#         - "If you are stuck, %name%, use ^l/spawn"
+#         - "If you are stuck, %name%, use &l/spawn"
 #       global: false
 #     Virgil,cookie:
 #       response:
-#         - "I'm sorry, %name%^f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
+#         - "I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
 #       global: true
 #       permission: virgil.cookie
 #     Virgil,kick:
 #       response:
-#         - "Certainly, %name%^f."
+#         - "Certainly, %name%&f."
 #         - /kick %player%
 #       global: true
-#       permission: bukkit.command.kick
+#       permissions:
+#         permission: bukkit.command.kick
 #         response:
-#           - "I'm sorry, %name%^f, I'm afraid I can't do that."
+#           - "I'm sorry, %name%&f, I'm afraid I can't do that."
 #         global: false
 #
 # Virgil will pick keyword matches that are longer first. For example if the player says "Virgil what is your website?"
@@ -68,14 +69,15 @@ keywords:
       - "Hello %name%"
   Virgil,who,you:
     response:
-      - "I am an assistant cobbled together by &ctrainphreak&f and &cimarki360&f, using parts from Jarvis (by &cScutt&f) and Steve (by &cnxtguy&f)."
+      - "I am an assistant cobbled together by &ctrainphreak&r and &cimarki360&r, using parts from &6Jarvis&r (by &cScutt&r) and &6Steve&r (by &cnxtguy&r)."
     global: false
   Virgil,kick:
     response:
-      - "Certainly, %name%^f."
+      - "Certainly, %name%&f."
       - /kick %player%
     global: true
-    permission: bukkit.command.kick
+    permissions:
+      permission: bukkit.command.kick
       response:
-        - "I'm sorry, %name%^f, I'm afraid I can't do that."
+        - "I'm sorry, %name%&f, I'm afraid I can't do that."
       global: false

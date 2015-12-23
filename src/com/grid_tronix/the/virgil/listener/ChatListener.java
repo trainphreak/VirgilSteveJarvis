@@ -16,6 +16,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatListener implements Listener
 {
@@ -55,14 +57,31 @@ public class ChatListener implements Listener
         {
             boolean matched = true;
             // If any of the words in the set aren't present, skip this set
-            for (String keyword : keywords)
+            if (keywords.size() == 1)
             {
-                if (!message.contains(keyword.toLowerCase()))
+                if (!message.contains(keywords.get(0)))
                 {
                     matched = false;
                     if (debug)
                         System.out.println("Reject: " + keywords);
-                    break;
+                }
+            }
+            else
+            {
+                for (String keyword : keywords)
+                {
+                    // Matcher1 checks the message for the keyword preceded by a space
+                    // Matcher2 checks the message for the keyword followed by a space
+                    // If neither finds something, then the keyword is not present and we skip to the next set
+                    Matcher matcher1 = Pattern.compile("\\s" + keyword.toLowerCase()).matcher(message);
+                    Matcher matcher2 = Pattern.compile(keyword.toLowerCase() + "\\s").matcher(message);
+                    if (!matcher1.find() && !matcher2.find())
+                    {
+                        matched = false;
+                        if (debug)
+                            System.out.println("Reject: " + keywords);
+                        break;
+                    }
                 }
             }
             // If all the words in the set are present, add them to the list of matching keyword sets
@@ -127,11 +146,11 @@ public class ChatListener implements Listener
                         }
                         if (debug)
                             System.out.println("Executing command: " + response);
-                        this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        dispatchCommand(event.getPlayer(), response.replace("/", ""));
                     }
                     else
                     {
-                        if (respondGlobally(response))
+                        if (respondGlobally(longestMatch))
                         {
                             if (debug)
                                 System.out.println("Broadcasting: " + response);
@@ -179,11 +198,11 @@ public class ChatListener implements Listener
                         }
                         if (debug)
                             System.out.println("Executing command: " + response);
-                        this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        dispatchCommand(event.getPlayer(), response.replace("/", ""));
                     }
                     else
                     {
-                        if (respondGlobally(response))
+                        if (respondGlobally(longestMatch))
                         {
                             if (debug)
                                 System.out.println("Broadcasting: " + response);
@@ -206,8 +225,8 @@ public class ChatListener implements Listener
             {
                 String toCleverbot = message.replace(this.plugin.getConfig().getString("bot-keyword"), "");
                 if (debug)
-                    System.out.println("Sending to Cleverbot:" + toCleverbot);
-                this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
+                    System.out.println("Sending to Cleverbot: " + toCleverbot);
+                this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
             }
         }
     }
@@ -225,19 +244,19 @@ public class ChatListener implements Listener
 
     private boolean respondGloballyNoPerms(String keyword)
     {
-        return this.plugin.getConfig().getBoolean("keywords." + keyword + ".permission.global");
+        return this.plugin.getConfig().getBoolean("keywords." + keyword + ".permissions.global");
     }
 
     private List<String> getResponsesNoPerms(String keyword)
     {
-        return this.plugin.getConfig().getStringList("keywords." + keyword + ".permission.response");
+        return this.plugin.getConfig().getStringList("keywords." + keyword + ".permissions.response");
     }
 
     // Returns false if the keyword has a permission defined and the player does not have that permission node
     // Returns true if there is no permission defined, or if the player does have the permission node
     private boolean playerHasPermissionForKeyword(Player player, String keyword)
     {
-        String permission = this.plugin.getConfig().getString("keywords." + keyword + ".permission", null);
+        String permission = this.plugin.getConfig().getString("keywords." + keyword + ".permissions.permission", null);
         if (permission == null)
             return true;
         return VirgilUtils.hasPermission(player, permission);
@@ -245,12 +264,17 @@ public class ChatListener implements Listener
 
     private void sendMessage(Player player, String message)
     {
-        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedMessage(player, message));
+        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedMessage(player, message), 10L);
     }
 
     private void sendBroadcast(String broadcast)
     {
-        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedBroadcast(broadcast));
+        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedBroadcast(broadcast), 10L);
+    }
+
+    private void dispatchCommand(Player player, String command)
+    {
+        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedCommand(player, command), 10L);
     }
 
     class DelayedMessage implements Runnable
@@ -310,6 +334,23 @@ public class ChatListener implements Listener
             {
                 VirgilUtils.log("[" + new Timestamp(new Date().getTime()) + "] " + e);
             }
+        }
+    }
+
+    class DelayedCommand implements Runnable
+    {
+        Player player;
+        String command;
+
+        DelayedCommand(Player player, String command)
+        {
+            this.player = player;
+            this.command = command;
+        }
+
+        public void run()
+        {
+            Bukkit.dispatchCommand(player, command);
         }
     }
 }
