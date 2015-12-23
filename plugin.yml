@@ -2,7 +2,7 @@ name: Virgil
 version: 1.0
 author: trainphreak
 softdepend: [Vault]
-main: com.grid_tronix.the.virgil
+main: com.grid_tronix.the.virgil.VirgilMain
 commands:
   virgil:
     description: Base command for Virgil

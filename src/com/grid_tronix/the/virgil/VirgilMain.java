@@ -69,9 +69,10 @@ public class VirgilMain extends JavaPlugin
             sender.sendMessage(VirgilUtils.getPrefix() + "-" + this.getDescription().getName() + " v" + this.getDescription().getVersion() + " by " + this.getDescription().getAuthors());
             return true;
         }
-        if(args[0].equalsIgnoreCase("reload") && VirgilUtils.hasPermission((Player) sender, "virgil.reload"))
+        if (!(sender instanceof Player) || (args[0].equalsIgnoreCase("reload") && VirgilUtils.hasPermission((Player) sender, "virgil.reload")))
         {
             this.reloadConfig();
+            sender.sendMessage(VirgilUtils.getPrefix() + "Config reloaded.");
             return true;
         }
         return false;

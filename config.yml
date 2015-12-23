@@ -1,4 +1,4 @@
-# For color reference, use http://www.minecraftwiki.net/wiki/Formatting_codes but with the prefix '&'
+# For color reference, use http://www.minecraftwiki.net/wiki/Formatting_codes but with the prefix '^'
 #
 # Use %player% for commands only! Virgil can only do simple commands! %player% will be the player targeted by a command
 # PROTIP: Player names may contain color codes, expecially on servers with /nick. Make sure to set the color back after
@@ -16,22 +16,22 @@
 # keywords:
 #     Virgil,help,stuck:
 #       response:
-#         - If you are stuck, %name%, use &l/spawn
+#         - If you are stuck, %name%, use ^l/spawn
 #       global: false
 #     Virgil,cookie:
 #       response:
-#         - I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
+#         - I'm sorry, %name%^f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
 #       global: true
 #       permission: virgil.cookie
 #     Virgil,kick:
 #       response:
-#         - Certainly, %name%&f.
+#         - Certainly, %name%^f.
 #         - /kick %player%
 #       global: true
 #       permission: bukkit.command.kick
 #     Virgil,kick:
 #       response:
-#         - I'm sorry, %name%&f, I'm afraid I can't do that.
+#         - I'm sorry, %name%^f, I'm afraid I can't do that.
 #       global: false
 #
 # Virgil will pick keyword matches that are longer first. For example if the player says "Virgil what is your website?"
@@ -45,7 +45,7 @@
 #  doesn't match any of the configured keywords, the message (with the keyword removed from the beginning) will be sent
 #  to Cleverbot for a response. Messages to and from Cleverbot are always global.
 
-chat-prefix: &1[&Virgil&1]&f
+chat-prefix: "&1[&cVirgil&1]&f"
 bot-keyword: virgil
 keywords:
   Virgil,website:
