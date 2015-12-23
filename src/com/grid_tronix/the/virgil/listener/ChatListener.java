@@ -24,6 +24,9 @@ public class ChatListener implements Listener
     private ChatterBot cleverbot;
     private ChatterBotSession cleverbotSession;
 
+    private boolean debug = true;
+    private static int messageID = 0;
+
     public ChatListener(final VirgilMain plugin, ChatterBotFactory chatterBotFactory, ChatterBot cleverbot, ChatterBotSession cleverbotSession)
     {
         this.plugin = plugin;
@@ -35,11 +38,17 @@ public class ChatListener implements Listener
     @EventHandler (priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerChat(final AsyncPlayerChatEvent event)
     {
-        if (VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger"))
+        if (!VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger"))
             return;
 
         String message = event.getMessage().toLowerCase();
         ArrayList<String> matchingKeywords = new ArrayList<>();
+
+        if (debug)
+        {
+            messageID++;
+            System.out.println("Message " + messageID + ": \"" + message + "\"");
+        }
 
         // For each set of keywords
         for (ArrayList<String> keywords : this.plugin.getKeywords())
@@ -65,6 +74,12 @@ public class ChatListener implements Listener
             }
         }
 
+        if (debug)
+        {
+            System.out.println("Matches:");
+            matchingKeywords.forEach(System.out::println);
+        }
+
         // If the player doesn't have the permission to trigger this response, remove it from the list of matches
         // This line says "for each String in the ArrayList, if the player doesn't have permission, remove it from the ArrayList"
         // The Stream API was introduced in Java 7 and is more efficient than a basic foreach, which is important in a chat event
@@ -80,6 +95,9 @@ public class ChatListener implements Listener
                 if (s.length() > longestMatch.length())
                     longestMatch = s;
 
+            if (debug)
+                System.out.println("Selected: " + longestMatch);
+
             // Cancel the chat message if the response is not global
             if (!respondGlobally(longestMatch))
                 event.setCancelled(true);
@@ -87,7 +105,11 @@ public class ChatListener implements Listener
             List<String> responses = getResponse(longestMatch);
             for (String response : responses)
             {
+                if (debug)
+                    System.out.println("Response: " + response);
                 response = response.replace("%name%", event.getPlayer().getName());
+                if (debug)
+                    System.out.println("Replaced %name%: " + response);
                 if (response.startsWith("/"))
                 {
                     if (response.contains("%player%"))
@@ -103,26 +125,42 @@ public class ChatListener implements Listener
                             }
                         }
                     }
+                    if (debug)
+                        System.out.println("Executing command: " + response);
                     this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
                 }
                 else
                 {
                     if (respondGlobally(response))
-                        sendBroadcast(VirgilUtils.convertColorCodes(response));
+                    {
+                        if (debug)
+                            System.out.println("Broadcasting: " + response);
+                        sendBroadcast(VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                    }
                     else
-                        sendMessage(event.getPlayer(), VirgilUtils.convertColorCodes(response));
+                    {
+                        if (debug)
+                            System.out.println("Messaging: " + response);
+                        sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                    }
                 }
             }
         }
         else // No matching keyword sets
         {
-            if (VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
+            // TODO: Stick this in a separate thread so the player's chat message doesn't take forever to show up
+            // TODO: Maybe have anything from the player for the next <configurable> seconds be sent to the bot so conversations don't need to always include the trigger word?
+            if (message.contains(this.plugin.getConfig().getString("bot-keyword")) && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
             {
-                String toCleverbot = message.substring(this.plugin.getConfig().getString("bot-keyword").length());
+                String toCleverbot = message.replace(this.plugin.getConfig().getString("bot-keyword"), "");
+                if (debug)
+                    System.out.println("Sending to Cleverbot:" + toCleverbot);
                 String fromCleverbot;
                 try
                 {
                     fromCleverbot = cleverbotSession.think(toCleverbot);
+                    if (debug)
+                        System.out.println("Received from Cleverbot: " + fromCleverbot);
                     sendBroadcast(VirgilUtils.getPrefix() + fromCleverbot);
                 }
                 catch (Exception e)
