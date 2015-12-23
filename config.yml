@@ -7,32 +7,31 @@
 # NOTE: The %console% wildcard from Jarvis has been removed because it's a big security risk with very little benefit
 #
 # The permission line should have the exact permission given to players, but it can be any permission you want to set.
-#  It can be used to prevent players from executing a response command they don't have permission to use, or to only
-#  allow certain players to trigger a global response. You can put a permission-less, non-global version of a response
-#  after the global version, as seen with the "Virgil,kick" keywords below. Players who lack the permission for the first
-#  response will still see the second response.
+#  It can be used to prevent players from trying to execute a response command they don't have permission to use, or to
+#  only allow certain players to trigger a global response. If there is a permission specified, you also need a global
+#  setting and a response under the permission; these are used when the player doesn't have the specified permission.
+#  It is *POSSIBLE BUT NOT RECOMMENDED* to have commands in the "no permissions" response list.
 #
 # Example:
 # keywords:
 #     Virgil,help,stuck:
 #       response:
-#         - If you are stuck, %name%, use ^l/spawn
+#         - "If you are stuck, %name%, use ^l/spawn"
 #       global: false
 #     Virgil,cookie:
 #       response:
-#         - I'm sorry, %name%^f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
+#         - "I'm sorry, %name%^f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
 #       global: true
 #       permission: virgil.cookie
 #     Virgil,kick:
 #       response:
-#         - Certainly, %name%^f.
+#         - "Certainly, %name%^f."
 #         - /kick %player%
 #       global: true
 #       permission: bukkit.command.kick
-#     Virgil,kick:
-#       response:
-#         - I'm sorry, %name%^f, I'm afraid I can't do that.
-#       global: false
+#         response:
+#           - "I'm sorry, %name%^f, I'm afraid I can't do that."
+#         global: false
 #
 # Virgil will pick keyword matches that are longer first. For example if the player says "Virgil what is your website?"
 #  and the config has the keywords "Virgil,what" and "Virgil,website", then the second one will be the one picked.
@@ -50,29 +49,33 @@ bot-keyword: virgil
 keywords:
   Virgil,website:
     response:
-      - Our website is thegrid-tronix.enjin.com
+      - "Our website is http://thegrid-tronix.enjin.com"
     global: true
   Virgil,cookie:
     response:
-      - I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons
+      - "I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
     global: true
   Virgil?:
     response:
-      - Yes, %name%&f?
+      - "Yes, %name%&f?"
     global: false
   Virgil,hi:
     response:
-      - Hello %name%
+      - "Hello %name%"
     global: false
   Virgil,hello:
     response:
-      - Hello %name%
+      - "Hello %name%"
   Virgil,who,you:
     response:
-      - I am an assistant cobbled together by &ctrainphreak&f and &cimarki360&f, using parts from Jarvis (by &cScutt&f) and Steve (by &cnxtguy&f).
+      - "I am an assistant cobbled together by &ctrainphreak&f and &cimarki360&f, using parts from Jarvis (by &cScutt&f) and Steve (by &cnxtguy&f)."
     global: false
-  Virgil,ban:
+  Virgil,kick:
     response:
-      - Certainly, sir.
-      - /ban %player%
+      - "Certainly, %name%^f."
+      - /kick %player%
     global: true
+    permission: bukkit.command.kick
+      response:
+        - "I'm sorry, %name%^f, I'm afraid I can't do that."
+      global: false

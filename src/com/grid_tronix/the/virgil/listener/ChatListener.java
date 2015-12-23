@@ -60,6 +60,8 @@ public class ChatListener implements Listener
                 if (!message.contains(keyword.toLowerCase()))
                 {
                     matched = false;
+                    if (debug)
+                        System.out.println("Reject: " + keywords);
                     break;
                 }
             }
@@ -80,11 +82,6 @@ public class ChatListener implements Listener
             matchingKeywords.forEach(System.out::println);
         }
 
-        // If the player doesn't have the permission to trigger this response, remove it from the list of matches
-        // This line says "for each String in the ArrayList, if the player doesn't have permission, remove it from the ArrayList"
-        // The Stream API was introduced in Java 7 and is more efficient than a basic foreach, which is important in a chat event
-        matchingKeywords.stream().filter(keyword -> !playerHasPermission(event.getPlayer(), this.plugin.getConfig().getString("keywords." + keyword + ".permission"))).forEach(matchingKeywords::remove);
-
         // Don't look for the best match if there aren't any matches
         if (matchingKeywords.size() > 0)
         {
@@ -98,75 +95,119 @@ public class ChatListener implements Listener
             if (debug)
                 System.out.println("Selected: " + longestMatch);
 
-            // Cancel the chat message if the response is not global
-            if (!respondGlobally(longestMatch))
-                event.setCancelled(true);
-
-            List<String> responses = getResponse(longestMatch);
-            for (String response : responses)
+            if (playerHasPermissionForKeyword(event.getPlayer(), longestMatch))
             {
-                if (debug)
-                    System.out.println("Response: " + response);
-                response = response.replace("%name%", event.getPlayer().getName());
-                if (debug)
-                    System.out.println("Replaced %name%: " + response);
-                if (response.startsWith("/"))
+
+                // Cancel the chat message if the response is not global
+                if (!respondGlobally(longestMatch))
+                    event.setCancelled(true);
+
+                List<String> responses = getResponses(longestMatch);
+                for (String response : responses)
                 {
-                    if (response.contains("%player%"))
+                    if (debug)
+                        System.out.println("Response: " + response);
+                    response = response.replace("%name%", event.getPlayer().getName());
+                    if (debug)
+                        System.out.println("Replaced %name%: " + response);
+                    if (response.startsWith("/"))
                     {
-                        String[] words = message.split(" ");
-                        for (int i = words.length; i > 0; i--)
+                        if (response.contains("%player%"))
                         {
-                            Player player = this.plugin.getServer().getPlayer(words[i - 1]);
-                            if (player != null)
+                            String[] words = message.split(" ");
+                            for (int i = words.length; i > 0; i--)
                             {
-                                response = response.replace("%player%", player.getName());
-                                break;
+                                Player player = this.plugin.getServer().getPlayer(words[i - 1]);
+                                if (player != null)
+                                {
+                                    response = response.replace("%player%", player.getName());
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (debug)
-                        System.out.println("Executing command: " + response);
-                    this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
-                }
-                else
-                {
-                    if (respondGlobally(response))
-                    {
                         if (debug)
-                            System.out.println("Broadcasting: " + response);
-                        sendBroadcast(VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                            System.out.println("Executing command: " + response);
+                        this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
                     }
                     else
                     {
+                        if (respondGlobally(response))
+                        {
+                            if (debug)
+                                System.out.println("Broadcasting: " + response);
+                            sendBroadcast(VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                        }
+                        else
+                        {
+                            if (debug)
+                                System.out.println("Messaging: " + response);
+                            sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                        }
+                    }
+                }
+            }
+            else // If player doesn't have the specified permission
+            {
+                if (debug)
+                    System.out.println("Player doesn't have permission. Selecting secondary response.");
+                // Cancel the chat message if the response is not global
+                if (!respondGloballyNoPerms(longestMatch))
+                    event.setCancelled(true);
+
+                List<String> responses = getResponsesNoPerms(longestMatch);
+                for (String response : responses)
+                {
+                    if (debug)
+                        System.out.println("Response: " + response);
+                    response = response.replace("%name%", event.getPlayer().getName());
+                    if (debug)
+                        System.out.println("Replaced %name%: " + response);
+                    if (response.startsWith("/"))
+                    {
+                        if (response.contains("%player%"))
+                        {
+                            String[] words = message.split(" ");
+                            for (int i = words.length; i > 0; i--)
+                            {
+                                Player player = this.plugin.getServer().getPlayer(words[i - 1]);
+                                if (player != null)
+                                {
+                                    response = response.replace("%player%", player.getName());
+                                    break;
+                                }
+                            }
+                        }
                         if (debug)
-                            System.out.println("Messaging: " + response);
-                        sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                            System.out.println("Executing command: " + response);
+                        this.plugin.getServer().dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                    }
+                    else
+                    {
+                        if (respondGlobally(response))
+                        {
+                            if (debug)
+                                System.out.println("Broadcasting: " + response);
+                            sendBroadcast(VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                        }
+                        else
+                        {
+                            if (debug)
+                                System.out.println("Messaging: " + response);
+                            sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + VirgilUtils.convertColorCodes(response));
+                        }
                     }
                 }
             }
         }
         else // No matching keyword sets
         {
-            // TODO: Stick this in a separate thread so the player's chat message doesn't take forever to show up
             // TODO: Maybe have anything from the player for the next <configurable> seconds be sent to the bot so conversations don't need to always include the trigger word?
             if (message.contains(this.plugin.getConfig().getString("bot-keyword")) && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
             {
                 String toCleverbot = message.replace(this.plugin.getConfig().getString("bot-keyword"), "");
                 if (debug)
                     System.out.println("Sending to Cleverbot:" + toCleverbot);
-                String fromCleverbot;
-                try
-                {
-                    fromCleverbot = cleverbotSession.think(toCleverbot);
-                    if (debug)
-                        System.out.println("Received from Cleverbot: " + fromCleverbot);
-                    sendBroadcast(VirgilUtils.getPrefix() + fromCleverbot);
-                }
-                catch (Exception e)
-                {
-                    VirgilUtils.log("[" + new Timestamp(new Date().getTime()) + "] " + e);
-                }
+                this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
             }
         }
     }
@@ -177,14 +218,24 @@ public class ChatListener implements Listener
         return this.plugin.getConfig().getBoolean("keywords." + keyword + ".global", false);
     }
 
-    private List<String> getResponse(String keyword)
+    private List<String> getResponses(String keyword)
     {
         return this.plugin.getConfig().getStringList("keywords." + keyword + ".response");
     }
 
+    private boolean respondGloballyNoPerms(String keyword)
+    {
+        return this.plugin.getConfig().getBoolean("keywords." + keyword + ".permission.global");
+    }
+
+    private List<String> getResponsesNoPerms(String keyword)
+    {
+        return this.plugin.getConfig().getStringList("keywords." + keyword + ".permission.response");
+    }
+
     // Returns false if the keyword has a permission defined and the player does not have that permission node
     // Returns true if there is no permission defined, or if the player does have the permission node
-    private boolean playerHasPermission(Player player, String keyword)
+    private boolean playerHasPermissionForKeyword(Player player, String keyword)
     {
         String permission = this.plugin.getConfig().getString("keywords." + keyword + ".permission", null);
         if (permission == null)
@@ -231,6 +282,34 @@ public class ChatListener implements Listener
         public void run()
         {
             Bukkit.broadcastMessage(broadcast);
+        }
+    }
+
+    class DelayedThought implements Runnable
+    {
+        String toBot;
+        String fromBot;
+        ChatterBotSession session;
+
+        DelayedThought(String thought, ChatterBotSession session)
+        {
+            this.session = session;
+            this.toBot = thought;
+        }
+
+        public void run()
+        {
+            try
+            {
+                fromBot = session.think(toBot);
+                if (debug)
+                    System.out.println("Received from Cleverbot: " + fromBot);
+                sendBroadcast(VirgilUtils.getPrefix() + fromBot);
+            }
+            catch (Exception e)
+            {
+                VirgilUtils.log("[" + new Timestamp(new Date().getTime()) + "] " + e);
+            }
         }
     }
 }
