@@ -12,6 +12,9 @@
 #  setting and a response with the permission; these are used when the player doesn't have the specified permission.
 #  It is *POSSIBLE BUT NOT RECOMMENDED* to have commands in the "no permissions" response list.
 #
+# If global is set to false, the chat message that triggered Virgil will be cancelled, and only the player who sent the
+#  message will see the reply.
+#
 # Example:
 # keywords:
 #     Virgil,help,stuck:
@@ -38,16 +41,16 @@
 #  and the config has the keywords "Virgil,what" and "Virgil,website", then the second one will be the one picked.
 #  However, if they are identical length, for example a player says "Virgil does the website use cookies?" with the
 #  keywords in the config "Virgil,website" and "Virgil,cookies", the plugin will use the one listed first. Also, the
-#  order of the keywords doesn't matter. As long as all the keywords are in the chat message, Virgil will answer. Be
-#  careful when using only one keyword because it may be found inside other words (e.g. "hi" is found in "thing").
+#  order of the keywords doesn't matter. As long as all the keywords are in the chat message, Virgil will answer.
 #  (Disclaimer: I have no idea why someone would ask Virgil if the website used cookies.)
 #
 # If a chat message from a player with the virgil.trigger.bot permission begins with the bot-keyword, and the message
 #  doesn't match any of the configured keywords, the message (with the keyword removed from the beginning) will be sent
 #  to Cleverbot for a response. Messages to and from Cleverbot are always global.
 #
-# WARNING: Only enable debugging if you have to! Each chat message generates at least one line of console output per
-#  keyword set defined in the config. The default config generates between 10 and 15 lines per message.
+# WARNING: Only enable debugging if you have to! It WILL spam the heck out of your console and logfiles! Each chat
+#  message generates at least one line of console output per response defined in the config. The default config alone
+#  generates between 10 and 15 lines per chat message.
 
 debug: false
 chat-prefix: "&1[&cVirgil&1]&f"
