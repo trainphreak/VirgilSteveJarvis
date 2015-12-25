@@ -26,7 +26,7 @@ public class ChatListener implements Listener
     private ChatterBot cleverbot;
     private ChatterBotSession cleverbotSession;
 
-    private boolean debug = false;
+    private boolean debug;
     private static int messageID = 0;
 
     public ChatListener(final VirgilMain plugin, ChatterBotFactory chatterBotFactory, ChatterBot cleverbot, ChatterBotSession cleverbotSession)
@@ -40,6 +40,8 @@ public class ChatListener implements Listener
     @EventHandler (priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerChat(final AsyncPlayerChatEvent event)
     {
+        boolean debug = this.plugin.getConfig().getBoolean("debug", false);
+        this.debug = debug;
         if (!VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger"))
             return;
 
@@ -59,7 +61,9 @@ public class ChatListener implements Listener
             // If any of the words in the set aren't present, skip this set
             if (keywords.size() == 1)
             {
-                if (!message.contains(keywords.get(0)))
+                if (debug)
+                    System.out.println("One keyword in this set");
+                if (!message.contains(keywords.get(0).toLowerCase()))
                 {
                     matched = false;
                     if (debug)
@@ -73,9 +77,10 @@ public class ChatListener implements Listener
                     // Matcher1 checks the message for the keyword preceded by a space
                     // Matcher2 checks the message for the keyword followed by a space
                     // If neither finds something, then the keyword is not present and we skip to the next set
-                    Matcher matcher1 = Pattern.compile("[\\s\\p{Punct}]" + keyword.toLowerCase()).matcher(message);
-                    Matcher matcher2 = Pattern.compile(keyword.toLowerCase() + "[\\p{Punct}\\s]").matcher(message);
-                    if (!matcher1.find() && !matcher2.find())
+                    //Matcher matcher1 = Pattern.compile("[\\s\\p{Punct}]" + keyword.toLowerCase()).matcher(message);
+                    //Matcher matcher2 = Pattern.compile(keyword.toLowerCase() + "[\\p{Punct}\\s]").matcher(message);
+                    Matcher matcher = Pattern.compile("\\b" + keyword.toLowerCase() + "\\b").matcher(message);
+                    if (!matcher.find())
                     {
                         matched = false;
                         if (debug)
@@ -202,7 +207,7 @@ public class ChatListener implements Listener
                     }
                     else
                     {
-                        if (respondGlobally(longestMatch))
+                        if (respondGloballyNoPerms(longestMatch))
                         {
                             if (debug)
                                 System.out.println("Broadcasting: " + response);
@@ -222,13 +227,11 @@ public class ChatListener implements Listener
         {
             // TODO: Maybe have anything from the player for the next <configurable> seconds be sent to the bot so conversations don't need to always include the trigger word?
             String botword = this.plugin.getConfig().getString("bot-keyword");
-            Matcher matcher1 = Pattern.compile("[\\s\\p{Punct}]" + botword.toLowerCase()).matcher(message);
-            Matcher matcher2 = Pattern.compile(botword.toLowerCase() + "[\\p{Punct}\\s]").matcher(message);
-            if (matcher1.find() && matcher2.find() && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
+            Matcher matcher1 = Pattern.compile("\\b" + botword.toLowerCase() + "\\b").matcher(message);
+            if (matcher1.find() && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
             {
-                String toCleverbot = message.replace(botword, "");
-                if (debug)
-                    System.out.println("Sending to Cleverbot: " + toCleverbot);
+                String toCleverbot = message.replace(botword, "").trim();
+                System.out.println("Sending to Cleverbot: " + toCleverbot);
                 this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
             }
         }
