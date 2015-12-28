@@ -28,6 +28,7 @@ public class ChatListener implements Listener
 
     private boolean debug;
     private static int messageID = 0;
+    private long okayToTalkAfterTimeMillis = 0;
 
     public ChatListener(final VirgilMain plugin, ChatterBotFactory chatterBotFactory, ChatterBot cleverbot, ChatterBotSession cleverbotSession)
     {
@@ -79,6 +80,7 @@ public class ChatListener implements Listener
                     // If neither finds something, then the keyword is not present and we skip to the next set
                     //Matcher matcher1 = Pattern.compile("[\\s\\p{Punct}]" + keyword.toLowerCase()).matcher(message);
                     //Matcher matcher2 = Pattern.compile(keyword.toLowerCase() + "[\\p{Punct}\\s]").matcher(message);
+                    // New regex checks for word boundaries (punctuation or whitespace or string end) on either side of the keyword
                     Matcher matcher = Pattern.compile("\\b" + keyword.toLowerCase() + "\\b").matcher(message);
                     if (!matcher.find())
                     {
@@ -149,9 +151,18 @@ public class ChatListener implements Listener
                                 }
                             }
                         }
-                        if (debug)
-                            System.out.println("Executing command: " + response);
-                        dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        if (response.contains("%console%"))
+                        {
+                            if (debug)
+                                System.out.println("Executing console command: " + response);
+                            dispatchConsoleCommand(response.replace("/", "").replace("%console%", ""));
+                        }
+                        else
+                        {
+                            if (debug)
+                                System.out.println("Executing command: " + response);
+                            dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        }
                     }
                     else
                     {
@@ -201,9 +212,18 @@ public class ChatListener implements Listener
                                 }
                             }
                         }
-                        if (debug)
-                            System.out.println("Executing command: " + response);
-                        dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        if (response.contains("%console%"))
+                        {
+                            if (debug)
+                                System.out.println("Executing console command: " + response);
+                            dispatchConsoleCommand(response.replace("/", "").replace("%console%", ""));
+                        }
+                        else
+                        {
+                            if (debug)
+                                System.out.println("Executing command: " + response);
+                            dispatchCommand(event.getPlayer(), response.replace("/", ""));
+                        }
                     }
                     else
                     {
@@ -226,7 +246,15 @@ public class ChatListener implements Listener
         else // No matching keyword sets
         {
             // TODO: Maybe have anything from the player for the next <configurable> seconds be sent to the bot so conversations don't need to always include the trigger word?
-            String botword = this.plugin.getConfig().getString("bot-keyword");
+            String botword = this.plugin.getConfig().getString("bot-keyword", null);
+            if (botword == null) // If "bot-keyword" option is not in the config, don't send to Cleverbot
+            {
+                return;
+            }
+            if (System.currentTimeMillis() < okayToTalkAfterTimeMillis) // If the temporary shutoff hasn't expired yet
+            {
+                return;
+            }
             Matcher matcher1 = Pattern.compile("\\b" + botword.toLowerCase() + "\\b").matcher(message);
             if (matcher1.find() && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
             {
@@ -235,6 +263,11 @@ public class ChatListener implements Listener
                 this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
             }
         }
+    }
+
+    public void shutup(int minutes)
+    {
+        okayToTalkAfterTimeMillis = System.currentTimeMillis() + (minutes * 60 * 1000);
     }
 
     // Returns true if the response is set to global, returns false otherwise
@@ -281,6 +314,11 @@ public class ChatListener implements Listener
     private void dispatchCommand(Player player, String command)
     {
         this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedCommand(player, command), 10L);
+    }
+
+    private void dispatchConsoleCommand(String command)
+    {
+        this.plugin.getServer().getScheduler().scheduleSyncDelayedTask(this.plugin, new DelayedConsoleCommand(command), 10L);
     }
 
     class DelayedMessage implements Runnable
@@ -356,7 +394,22 @@ public class ChatListener implements Listener
 
         public void run()
         {
-            Bukkit.dispatchCommand(player, command);
+            Bukkit.getServer().dispatchCommand(player, command);
+        }
+    }
+
+    class DelayedConsoleCommand implements Runnable
+    {
+        String command;
+
+        DelayedConsoleCommand(String command)
+        {
+            this.command = command;
+        }
+
+        public void run()
+        {
+            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
         }
     }
 }

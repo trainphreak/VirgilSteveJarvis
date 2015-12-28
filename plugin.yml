@@ -1,5 +1,5 @@
 name: Virgil
-version: 1.0
+version: 1.1
 author: trainphreak
 softdepend: [Vault]
 main: com.grid_tronix.the.virgil.VirgilMain
@@ -9,11 +9,14 @@ commands:
 permissions:
   virgil.trigger:
     description: Players with this permission are able to trigger a config-defined response
-    default: true
+    default: false
   virgil.trigger.bot:
     description: Players with this permission are able to trigger a chatbot response
     default: false
     children:
       virgil.trigger: true
   virgil.reload:
+    default: false
+  virgil.shutup:
+    description: Players with this permission are able to turn off all Cleverbot responses
     default: false
