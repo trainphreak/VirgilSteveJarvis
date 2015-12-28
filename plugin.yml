@@ -1,6 +1,6 @@
 name: Virgil
 version: 1.1
-author: trainphreak
+authors: [trainphreak,imarki360]
 softdepend: [Vault]
 main: com.grid_tronix.the.virgil.VirgilMain
 commands:
