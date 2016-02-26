@@ -59,18 +59,37 @@ debug: false
 chat-prefix: "&1[&cVirgil&1]&f"
 bot-keyword: virgil
 keywords:
-  Virgil,website:
+  # A basic private response
+  Virgil,help,stuck:
     response:
-      - "Our website is http://thegrid-tronix.enjin.com"
-    global: true
+      - "If you are stuck, %name%, use &2&l/spawn"
+    global: false
+  # A basic public response
   Virgil,cookie:
     response:
-      - "I'm sorry, %name%&f, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
+      - "I'm sorry, %name%, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
     global: true
-  Virgil,?:
+  # A basic permission-based response that suppresses the message and responds privately if the permission is missing
+  Virgil,kick:
     response:
-      - "Yes, %name%&f?"
-    global: false
+      - "Certainly, %name%."
+      - "/kick %player%"
+    global: true
+    permissions:
+      permission: minecraft.command.kick
+      response:
+        - "I'm sorry, %name%, I'm afraid I can't do that."
+      global: false
+  # A permission-based response that doesn't suppress the message and doesn't respond if the player is missing the permission
+  Virgil,do,backflip:
+    response:
+      - "*does a backflip*"
+    global: true
+    permissions:
+      permission: randomstring.backflip
+      response:
+      global: true
+  # Other responses
   Virgil,hi:
     response:
       - "Hello %name%"
@@ -82,13 +101,11 @@ keywords:
     response:
       - "I am an assistant cobbled together by &ctrainphreak&r and &cimarki360&r, using parts from &6Jarvis&r (by &cScutt&r) and &6Steve&r (by &cnxtguy&r)."
     global: false
-  Virgil,kick:
+  Virgil,website:
     response:
-      - "Certainly, %name%&f."
-      - /kick %player%
+      - "Our website is http://thegrid-tronix.enjin.com"
     global: true
-    permissions:
-      permission: minecraft.command.kick
-      response:
-        - "I'm sorry, %name%&f, I'm afraid I can't do that."
-      global: false
+  Virgil,cookie:
+    response:
+      - "I'm sorry, %name%&r, but I'm afraid I can't do that. You have exceeded the weight limit of: 3 metric tons"
+    global: true
