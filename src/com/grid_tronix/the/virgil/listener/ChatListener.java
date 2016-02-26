@@ -141,20 +141,38 @@ public class ChatListener implements Listener
                         if (response.contains("%player%"))
                         {
                             String[] words = message.split(" ");
-                            for (int i = words.length; i > 0; i--)
+                            List<Player> matchedPlayers = new ArrayList<>();
+                            for (int i = words.length - 1; i >= 0; i--)
                             {
-                                Player player = this.plugin.getServer().getPlayer(words[i - 1]);
-                                if (player != null)
+                                matchedPlayers.addAll(this.plugin.getServer().matchPlayer(words[i]));
+                            }
+                            if (matchedPlayers.size() == 0)
+                            {
+                                sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + "No players found.");
+                                return;
+                            }
+                            else if (matchedPlayers.size() > 1)
+                            {
+                                StringBuilder builder = new StringBuilder();
+                                for (Player p : matchedPlayers)
                                 {
-                                    response = response.replace("%player%", player.getName());
-                                    break;
+                                    builder.append(p.getName()).append(", ");
                                 }
+                                builder.reverse().deleteCharAt(0).deleteCharAt(0).reverse(); // Flip, remove "first two" (last two) chars, flip back
+                                sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + "Players found: " + builder.toString());
+                                return;
+                            }
+                            else // matchedPlayers.size() == 1
+                            {
+                                response = response.replace("%player%", matchedPlayers.get(0).getName());
+                                if (debug)
+                                    System.out.println("Using player " + matchedPlayers.get(0).getName());
                             }
                         }
                         if (response.contains("%console%"))
                         {
                             if (debug)
-                                System.out.println("Executing console command: " + response);
+                                System.out.println("Executing console command: " + response.replace("%console%", ""));
                             dispatchConsoleCommand(response.replace("/", "").replace("%console%", ""));
                         }
                         else
@@ -202,14 +220,35 @@ public class ChatListener implements Listener
                         if (response.contains("%player%"))
                         {
                             String[] words = message.split(" ");
-                            for (int i = words.length; i > 0; i--)
+                            List<Player> matchedPlayers = new ArrayList<>();
+                            for (int i = words.length - 1; i >= 0; i--)
                             {
-                                Player player = this.plugin.getServer().getPlayer(words[i - 1]);
-                                if (player != null)
+                                matchedPlayers.addAll(this.plugin.getServer().matchPlayer(words[i]));
+                            }
+                            if (debug)
+                            {
+                                System.out.println(matchedPlayers);
+                            }
+                            if (matchedPlayers.size() == 0)
+                            {
+                                sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + "No players found.");
+                                return;
+                            }
+                            else if (matchedPlayers.size() > 1)
+                            {
+                                StringBuilder builder = new StringBuilder();
+                                for (Player p : matchedPlayers)
                                 {
-                                    response = response.replace("%player%", player.getName());
-                                    break;
+                                    builder.append(p.getName()).append(", ");
                                 }
+                                builder.reverse().deleteCharAt(0).deleteCharAt(0).reverse(); // Flip, remove "first two" (last two) chars, flip back
+                                sendMessage(event.getPlayer(), VirgilUtils.getPrefix() + "Players found: " + builder.toString());
+                                return;
+                            }
+                            else // matchedPlayers.size() == 1
+                            {
+                                response = response.replace("%player%", matchedPlayers.get(0).getName());
+                                break;
                             }
                         }
                         if (response.contains("%console%"))
@@ -258,9 +297,9 @@ public class ChatListener implements Listener
             Matcher matcher1 = Pattern.compile("\\b" + botword.toLowerCase() + "\\b").matcher(message);
             if (matcher1.find() && VirgilUtils.hasPermission(event.getPlayer(), "virgil.trigger.bot"))
             {
-                String toCleverbot = message.replace(botword, "").trim();
+                String toCleverbot = message.replace(botword, "Cleverbot").trim();
                 System.out.println("Sending to Cleverbot: " + toCleverbot);
-                this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, new DelayedThought(toCleverbot, cleverbotSession));
+                this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, new DelayedThought(toCleverbot, cleverbotSession, botword));
             }
         }
     }
@@ -358,11 +397,13 @@ public class ChatListener implements Listener
         String toBot;
         String fromBot;
         ChatterBotSession session;
+        String name;
 
-        DelayedThought(String thought, ChatterBotSession session)
+        DelayedThought(String thought, ChatterBotSession session, String name)
         {
             this.session = session;
             this.toBot = thought;
+            this.name = name;
         }
 
         public void run()
@@ -372,7 +413,7 @@ public class ChatListener implements Listener
                 fromBot = session.think(toBot);
                 if (debug)
                     System.out.println("Received from Cleverbot: " + fromBot);
-                sendBroadcast(VirgilUtils.getPrefix() + fromBot);
+                sendBroadcast(VirgilUtils.getPrefix() + fromBot.replace("Cleverbot", name));
             }
             catch (Exception e)
             {
